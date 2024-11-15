@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js -->
+</head>
+<body>
+    <h1>Temperature Tracker</h1>
+    <form id="temperatureForm">
+        <label for="location">Location:</label>
+        <select id="location" name="location"></select>
+        <button type="button" onclick="getTemperatureData()">Get Temperature Data</button>
+    </form>
+
+    <h2>Temperature Data:</h2>
+    <div id="temperatureData"></div>
+
+    <script>
+        const BASE_URL = "http://127.0.0.1:5000";  // Flask server URL
+
+        async function fetchLocations() {
+            try {
+                const response = await fetch(`${BASE_URL}/get_locations`);
+                if (!response.ok) {
+                    console.error("Failed to fetch locations:", response.status, response.statusText);
+                    return;
+                }
+
+                const locations = await response.json();
+                const locationDropdown = document.getElementById('location');
+                locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location;
+                    option.textContent = location;
+                    locationDropdown.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error fetching locations:", error);
+            }
+        }
+
+        // Fetch and display temperature data based on user input
+        async function getTemperatureData() {
+            const location = document.getElementById('location').value;
+            const response = await fetch(`${BASE_URL}/get_temperature?location=${location}`);
+            const data = await response.json();
+            displayTemperatureData(data);
+        }
+
+        // Display the fetched temperature data as a chart
+        function displayTemperatureData(data) {
+            const container = document.getElementById('temperatureData');
+            container.innerHTML = '';  // Clear previous content
+
+            if (data.length === 0) {
+                container.innerHTML = '<p>No data found for the selected time range and location.</p>';
+                return;
+            }
+
+            // Display each data entry in the container
+            data.forEach(entry => {
+                const entryElem = document.createElement('p');
+                entryElem.textContent = `Time: ${entry.time}, Temperature: ${entry.temperature}°C`;
+                container.appendChild(entryElem);
+            });
+        }
+
+        // Load initial data for location dropdown on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchLocations();
+        });
+    </script>
+</body>
+</html>
