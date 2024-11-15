@@ -10,4 +10,4 @@ pip install -r requirements.txt
 python app.py
 python -m http.server
 ```
-Navigate to http://127.0.0.1:5000/ to view the application interface.
+Navigate to http://127.0.0.1:8000/ to view the application interface.

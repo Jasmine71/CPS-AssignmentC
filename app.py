@@ -40,7 +40,7 @@ def get_temperature():
     query = f"""
     SELECT mean(value) FROM "Temperature_°C"
     WHERE time >= '{time1}' AND time <= '{time2}' AND location_specific = '{location}'
-    GROUP BY device_id, time(30m)
+    GROUP BY device_id, time(10m)
     ORDER BY time ASC;
     """
     result = client.query(query)
