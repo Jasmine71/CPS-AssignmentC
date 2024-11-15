@@ -1,0 +1,3 @@
+influxdb
+flask
+flask_cors

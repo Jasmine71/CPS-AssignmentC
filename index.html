@@ -5,12 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Temperature Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <h1>Temperature Tracker</h1>
     <form id="temperatureForm">
         <label for="location">Location:</label>
         <select id="location" name="location"></select>
+        <p></p>
+        <label for="time1">Select a starting date and time:</label>
+        <input type="datetime-local" id="time1" name="time1" onchange="validateTime()">
+        <p></p>
+        <label for="time2">Select a ending date and time:</label>
+        <input type="datetime-local" id="time2" name="time2" onchange="validateTime()">
+        <p></p>
         <button type="button" onclick="getTemperatureData()">Get Temperature Data</button>
     </form>
 
@@ -41,36 +49,110 @@
             }
         }
 
+        //Check if date input is correct format
+        function isValid(datetime) {
+            const date = new Date(datetime);
+            
+            return !isNaN(date.getTime()) && datetime.includes(date.getFullYear()) && 
+                datetime.includes(String(date.getMonth() + 1).padStart(2, '0')) &&
+                datetime.includes(String(date.getDate()).padStart(2, '0')) &&
+                datetime.includes(String(date.getHours()).padStart(2, '0')) &&
+                datetime.includes(String(date.getMinutes()).padStart(2, '0'));
+        }
+
         // Fetch and display temperature data based on user input
         async function getTemperatureData() {
             const location = document.getElementById('location').value;
-            const response = await fetch(`${BASE_URL}/get_temperature?location=${location}`);
+
+            //Check temp input is valid
+            const time1 = document.getElementById('time1').value;
+            const time2 = document.getElementById('time2').value;
+            if (!isValid(time1) || !isValid(time2)) {
+                alert("Please enter a correct starting date and ending date.");
+                return;
+            }
+
+            const response = await fetch(`${BASE_URL}/get_temperature?location=${location}&time1=${time1}&time2=${time2}`);
             const data = await response.json();
             displayTemperatureData(data);
         }
 
-        // Display the fetched temperature data as a chart
+        // Display the fetched temperature data as a plot
         function displayTemperatureData(data) {
             const container = document.getElementById('temperatureData');
             container.innerHTML = '';  // Clear previous content
 
-            if (data.length === 0) {
+            if (data['x'].length === 0) {
                 container.innerHTML = '<p>No data found for the selected time range and location.</p>';
                 return;
             }
 
-            // Display each data entry in the container
-            data.forEach(entry => {
-                const entryElem = document.createElement('p');
-                entryElem.textContent = `Time: ${entry.time}, Temperature: ${entry.temperature}°C`;
-                container.appendChild(entryElem);
-            });
+            //Plot
+            const plot = document.createElement('div');
+            plot.id = "plotlyChart";
+            container.appendChild(plot)
+
+            //Send data to plot
+            var d = [data];
+            var layout = {
+                title: "Temperature over time",
+                xaxis: {
+                    title: "Time",
+                },
+                yaxis: {
+                    title: "Temperature/°C",
+                },
+            };
+            Plotly.newPlot(plot, d, layout)
+        }
+
+        //Format date into correct format for HTML box
+        function formatDate(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        };  
+
+        //Check if time2 befor time1
+        //Set time2 to be 1 day after time1 if true
+        function validateTime() {
+            time1 = document.getElementById('time1').value;
+            time2 = document.getElementById('time2').value;
+
+            if (!isValid(time1) || !isValid(time2)) {
+                alert("Please enter a correct starting date and ending date.");
+                return;
+            }
+
+            if (time1 && time2 && new Date(time1) >= new Date(time2)) {
+                alert("Starting date and time must be earlier than the ending date and time.");
+                t = new Date(time1);
+                t.setDate(t.getDate() + 1);
+                document.getElementById("time2").value = formatDate(t);
+                return;
+            }
+        }
+
+        //Set default start date to be 1 week ago
+        //Set default end date to now
+        function setDefaultTime() {
+            time1 = new Date();
+            time1.setDate(time1.getDate() - 7);
+            time2 = new Date();
+
+            document.getElementById("time1").value = formatDate(time1);
+            document.getElementById("time2").value = formatDate(time2);
         }
 
         // Load initial data for location dropdown on page load
+        //Set default start/end time
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchLocations();
-        });
+            setDefaultTime();
+        }, );
     </script>
 </body>
 </html>

@@ -2,8 +2,7 @@
 Before running the application, make sure you have Python installed. You also need to install the required packages. You can do this using pip:
 
 ```bash
-pip install influxdb
-pip install flask
+pip install -r requirements.txt
 ```
 ## Running the Application
 
@@ -11,4 +10,4 @@ pip install flask
 python app.py
 python -m http.server
 ```
-Navigate to http://127.0.0.1:8000/ to view the application interface.
+Navigate to http://127.0.0.1:5000/ to view the application interface.
